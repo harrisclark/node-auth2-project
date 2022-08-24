@@ -58,7 +58,7 @@ const only = role_name => (req, res, next) => {
 
 
 const checkUsernameExists = async (req, res, next) => {
-  const users = Users.findBy({ username: req.body.username });
+  const users = await Users.findBy({ username: req.body.username });
   if (users.length) {
     req.user = users[0]
     next()
@@ -76,7 +76,27 @@ const checkUsernameExists = async (req, res, next) => {
 
 
 const validateRoleName = (req, res, next) => {
+  if (req.body.role_name == null) {
+    req.role_name = 'student'
+    next()
+    return;
+  }
+
+  const trimRole = req.body.role_name.trim().toLowerCase();
+
+  if (trimRole.length > 32) {
+    next({ status: 422, message: "Role name can not be longer than 32 chars" })
+    return;
+  }
+
+  if (trimRole === 'admin') {
+    next({ status: 422, message: "Role name can not be admin" })
+    return;
+  }
   
+  req.role_name = trimRole
+  next()
+
   /*
     If the role_name in the body is valid, set req.role_name to be the trimmed string and proceed.
 
